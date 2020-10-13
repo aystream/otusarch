@@ -1,0 +1,34 @@
+replicaCount: 1
+updateType: RollingUpdate
+host: arch.homework
+context_path_template: /otusapp/alex($|/)(.*)
+nameOverride: app-chart
+#otusapp/alex
+image: aystream/health:v2.7 # todo обновить image и тут поменять
+
+service:
+  type: NodePort
+  internalPort: 8000
+  externalPort: 8000
+  liveness:
+    path: /
+    initialDelaySeconds: 120
+    timeoutSeconds: 3
+    periodSeconds: 30
+    successThreshold: 1
+    failureThreshold: 5
+  readiness:
+    path: /health
+    initialDelaySeconds: 120
+    timeoutSeconds: 3
+    periodSeconds: 30
+    successThreshold: 1
+    failureThreshold: 5
+
+postgresql:
+  enabled: true
+  postgresqlUsername: postgres
+  postgresqlPassword: password
+  postgresqlDatabase: app_test
+  service:
+    port: "5432"
