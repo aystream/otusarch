@@ -11,17 +11,17 @@ service:
   internalPort: 8000
   externalPort: 8000
   liveness:
-    path: /
-    initialDelaySeconds: 120
-    timeoutSeconds: 3
-    periodSeconds: 30
+    path: /health
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 2
     successThreshold: 1
     failureThreshold: 5
   readiness:
     path: /health
-    initialDelaySeconds: 120
-    timeoutSeconds: 3
-    periodSeconds: 30
+    initialDelaySeconds: 10
+    timeoutSeconds: 5
+    periodSeconds: 2
     successThreshold: 1
     failureThreshold: 5
 
@@ -32,3 +32,6 @@ postgresql:
   postgresqlDatabase: app_test
   service:
     port: "5432"
+
+ # helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx/
+ # helm repo update && helm install nginx stable/nginx-ingress --namespace monitoring -f nginx-ingress.yaml && minikube ip
