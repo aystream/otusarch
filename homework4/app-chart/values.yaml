@@ -1,0 +1,101 @@
+replicaCount: 2
+updateType: RollingUpdate
+host: arch.homework
+context_path_template: /otusapp/alex($|/)(.*)
+nameOverride: app-chart
+#otusapp/alex
+image: aystream/health:v10 # todo обновить image и тут поменять
+
+service:
+  type: NodePort
+  internalPort: 8000
+  externalPort: 8000
+  liveness:
+    path: /health
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 2
+    successThreshold: 1
+    failureThreshold: 5
+  readiness:
+    path: /health
+    initialDelaySeconds: 10
+    timeoutSeconds: 5
+    periodSeconds: 2
+    successThreshold: 1
+    failureThreshold: 5
+
+#metrics:
+#  serviceMonitor:
+#    enabled: true
+
+postgresql:
+  enabled: true
+  postgresqlUsername: postgres
+  postgresqlPassword: password
+  postgresqlDatabase: otus_crud_app
+  service:
+    port: "5432"
+
+
+prometheus-operator:
+  grafana:
+    adminPassword: password
+    notifiers:
+      notifiers.yaml:
+        notifiers:
+          - name: Email
+            type: email
+            uid: notifier1
+            is_default: true
+            send_reminder: false
+            disable_resolve_message: false
+            settings:
+              addresses: example@example.example
+              uploadImage: false
+    grafana.ini:
+      smtp:
+        enabled: true
+        host: smtp.gmail.com:587
+        from_address:
+        user:
+        password:
+        skip_verify: true
+        from_name: Grafana
+    service:
+      type: NodePort
+      nodePort: 30002
+  prometheus:
+    service:
+      type: NodePort
+      nodePort: 30001
+    prometheusSpec:
+      serviceMonitorSelectorNilUsesHelmValues: false
+      serviceMonitorSelector: {}
+      additionalScrapeConfigs:
+        - job_name: pg-exporter
+          scrape_interval: 1m
+          static_configs:
+            - targets: ['pg-exporter:80']
+nginx-ingress:
+  controller:
+    kind: DaemonSet
+    reportNodeInternalIp: true
+    daemonset:
+      useHostPort: true
+      hostPorts:
+        http: 80
+        https: 443
+    service:
+      type: NodePort
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: true
+prometheus-postgres-exporter:
+  config:
+    datasource:
+      host: pg-db
+      user: postgres
+      password: password
+      database: otus_crud_app

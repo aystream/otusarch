@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "app-chart.fullname" . }}
+  labels:
+    {{- include "app-chart.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: {{ .Values.updateType }}
+  selector:
+    matchLabels:
+      {{- include "app-chart.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "app-chart.selectorLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/config.yaml") . | sha256sum }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image }}"
+          ports:
+            - containerPort: {{ .Values.service.internalPort }}
+              name: web
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              port: web
+              path: {{ .Values.service.readiness.path }}
+            initialDelaySeconds: {{ .Values.service.liveness.initialDelaySeconds}}
+            timeoutSeconds: {{ .Values.service.liveness.timeoutSeconds}}
+            periodSeconds: {{ .Values.service.liveness.periodSeconds}}
+            successThreshold: {{ .Values.service.liveness.successThreshold}}
+            failureThreshold: {{ .Values.service.liveness.failureThreshold}}
+          readinessProbe:
+            httpGet:
+              port: web
+              path: {{ .Values.service.readiness.path }}
+            initialDelaySeconds: {{ .Values.service.readiness.initialDelaySeconds}}
+            timeoutSeconds: {{ .Values.service.readiness.timeoutSeconds}}
+            periodSeconds: {{ .Values.service.readiness.periodSeconds}}
+            successThreshold: {{ .Values.service.readiness.successThreshold}}
+            failureThreshold: {{ .Values.service.readiness.failureThreshold}}
+          env:
+          - name: pg.password
+            valueFrom:
+              secretKeyRef:
+                name: app-secret
+                key: PG_PASSWORD
+          - name: pg.user
+            valueFrom:
+              configMapKeyRef:
+                name: app-config
+                key: PG_USER
+          - name: pg.port
+            valueFrom:
+              configMapKeyRef:
+                name: app-config
+                key: PG_PORT
+          - name: pg.db
+            valueFrom:
+              configMapKeyRef:
+                name: app-config
+                key: PG_DB

@@ -1,0 +1,57 @@
+server:
+  port: 8000
+#  servlet:
+#    context-path: /api/v1
+#
+
+spring:
+  #h2:
+  #  console:
+  #    enabled: true
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://pg-db:${pg.port}/${pg.db}
+    username: ${pg.user}
+    password: ${pg.password}
+  flyway:
+    enabled: true
+    baselineOnMigrate: true
+    validateOnMigrate: false
+  jpa:
+    hibernate:
+      ddl-auto: validate
+      dialect: postgres
+      properties:
+        hibernate:
+          order_by:
+            default_null_ordering: last
+          jdbc:
+            lob:
+              non_contextual_creation: true
+
+management:
+  metrics:
+    web:
+      server:
+        request:
+          autotime:
+            percentiles-histogram: true
+    export:
+      prometheus:
+        enabled: true
+  endpoint:
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+    health:
+      enabled: true
+      show-details: never
+      status:
+        order: FATAL,DOWN,OUT_OF_SERVICE,UNKNOWN,OK,UP
+  endpoints:
+    enabled-by-default: false
+    web:
+      base-path: /
+      exposure:
+        include: '*'
